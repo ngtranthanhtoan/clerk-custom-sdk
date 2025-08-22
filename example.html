@@ -1,0 +1,766 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clerk SDK Example</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .container {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .form-group {
+            margin: 15px 0;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        .btn {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 5px;
+        }
+        .btn:hover {
+            background: #0056b3;
+        }
+        .btn:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+        }
+        .status {
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        .user-info {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+        }
+        .hidden {
+            display: none;
+        }
+        pre {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+            font-size: 14px;
+        }
+        .section {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            margin: 20px 0;
+            padding: 20px;
+        }
+        .section h3 {
+            margin-top: 0;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔐 Clerk SDK Demo</h1>
+
+    <div class="container">
+        <h3>🔄 Session Persistence Demo</h3>
+        <div class="status info">
+            <strong>Welcome!</strong> This demo shows how users stay logged in when they return to your app.
+            <br><br>
+            <strong>🔍 What to try:</strong><br>
+            • Sign in with your credentials<br>
+            • Refresh the page - you'll stay logged in! 🎉<br>
+            • Close and reopen the browser tab - still logged in!<br>
+            • Use the "Session Persistence Demo" buttons below when signed in<br>
+        </div>
+    </div>
+
+    <div id="status" class="status info">
+        Initializing Clerk SDK...
+    </div>
+
+    <!-- Authentication Forms -->
+    <div id="auth-section" class="section">
+        <h3>Authentication</h3>
+
+        <!-- Sign In Form -->
+        <div id="signin-container" class="container">
+            <h4>Sign In</h4>
+            <div class="form-group">
+                <label for="signin-email">Email:</label>
+                <input type="email" id="signin-email" placeholder="Enter your email" />
+            </div>
+            <div class="form-group">
+                <label for="signin-password">Password:</label>
+                <input type="password" id="signin-password" placeholder="Enter your password" />
+            </div>
+            <button class="btn" onclick="signInWithPassword()">Sign In with Password</button>
+            <button class="btn" onclick="signInWithEmailCode()">Send Email Code</button>
+
+            <div id="email-code-section" class="hidden">
+                <div class="form-group">
+                    <label for="email-code">Email Code:</label>
+                    <input type="text" id="email-code" placeholder="Enter 6-digit code" maxlength="6" />
+                </div>
+                <button class="btn" onclick="verifyEmailCode()">Verify Code</button>
+            </div>
+        </div>
+
+        <!-- Sign Up Form -->
+        <div id="signup-container" class="container">
+            <h4>Sign Up</h4>
+            <div class="form-group">
+                <label for="signup-email">Email:</label>
+                <input type="email" id="signup-email" placeholder="Enter your email" />
+            </div>
+            <div class="form-group">
+                <label for="signup-password">Password:</label>
+                <input type="password" id="signup-password" placeholder="Create a password" />
+            </div>
+            <div class="form-group">
+                <label for="signup-firstname">First Name:</label>
+                <input type="text" id="signup-firstname" placeholder="Your first name" />
+            </div>
+            <div class="form-group">
+                <label for="signup-lastname">Last Name:</label>
+                <input type="text" id="signup-lastname" placeholder="Your last name" />
+            </div>
+            <button class="btn" onclick="signUpWithEmail()">Sign Up</button>
+
+            <div id="signup-verify-section" class="hidden">
+                <div class="form-group">
+                    <label for="signup-code">Verification Code:</label>
+                    <input type="text" id="signup-code" placeholder="Enter verification code" maxlength="6" />
+                </div>
+                <button class="btn" onclick="verifySignUp()">Verify & Complete Sign Up</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- User Dashboard -->
+    <div id="user-dashboard" class="section hidden">
+        <h3>User Dashboard</h3>
+        <div id="user-info" class="user-info"></div>
+
+        <div class="container">
+            <h4>Actions</h4>
+            <button class="btn" onclick="getJWTToken()">Get JWT Token</button>
+            <button class="btn" onclick="getCurrentUser()">Get Current User</button>
+            <button class="btn" onclick="refreshUser()">Refresh User Data</button>
+            <button class="btn" onclick="refreshSession()">Refresh Session</button>
+            <button class="btn" onclick="debugSession()">Debug Session</button>
+            <button class="btn" onclick="debugClient()">Debug Client</button>
+            <button class="btn" onclick="signOut()">Sign Out</button>
+            <button class="btn" onclick="signOutAll()">Sign Out All Sessions</button>
+        </div>
+
+        <div class="container">
+            <h4>Session Persistence Demo</h4>
+            <button class="btn" onclick="showSessionInfo()">📱 Show Session Info</button>
+            <button class="btn" onclick="simulateRefresh()">🔄 Test Refresh (Stay Logged In)</button>
+            <button class="btn" onclick="clearBrowserStorage()">🗑️ Clear Storage (Force Logout)</button>
+            
+            <div class="status info">
+                <strong>💡 Session Persistence:</strong><br>
+                • Your login state is automatically saved<br>
+                • Closing/refreshing keeps you logged in<br>
+                • Sessions auto-refresh every 5 minutes<br>
+                • Try refreshing this page - you'll stay logged in!
+            </div>
+        </div>
+
+        <div id="token-display" class="hidden">
+            <h4>JWT Token</h4>
+            <pre id="jwt-token"></pre>
+        </div>
+    </div>
+
+    <!-- Organizations Section -->
+    <div id="org-section" class="section hidden">
+        <h3>Organization Management</h3>
+
+        <div class="container">
+            <h4>Create Organization</h4>
+            <div class="form-group">
+                <label for="org-name">Organization Name:</label>
+                <input type="text" id="org-name" placeholder="My Company" />
+            </div>
+            <div class="form-group">
+                <label for="org-slug">Slug:</label>
+                <input type="text" id="org-slug" placeholder="my-company" />
+            </div>
+            <button class="btn" onclick="createOrganization()">Create Organization</button>
+        </div>
+
+        <div class="container">
+            <h4>Your Organizations</h4>
+            <button class="btn" onclick="listOrganizations()">Load Organizations</button>
+            <div id="organizations-list"></div>
+        </div>
+    </div>
+
+    <!-- Load the Clerk SDK -->
+    <script src="clerk-sdk.js"></script>
+
+    <script>
+        // Initialize Clerk SDK
+        const clerk = new ClerkSDK({
+            domain: 'bright-newt-8.clerk.accounts.dev' // Replace with your domain
+        });
+
+        let currentSignIn = null;
+        let currentSignUp = null;
+
+        // Status helpers
+        function showStatus(message, type = 'info') {
+            const statusEl = document.getElementById('status');
+            statusEl.textContent = message;
+            statusEl.className = `status ${type}`;
+        }
+
+        function updateUI() {
+            const isSignedIn = clerk.isSignedIn;
+
+            document.getElementById('auth-section').classList.toggle('hidden', isSignedIn);
+            document.getElementById('user-dashboard').classList.toggle('hidden', !isSignedIn);
+            document.getElementById('org-section').classList.toggle('hidden', !isSignedIn);
+
+            if (isSignedIn) {
+                displayUserInfo();
+            }
+        }
+
+        function displayUserInfo() {
+            if (!clerk.user) return;
+
+            const userInfoEl = document.getElementById('user-info');
+            const user = clerk.user;
+
+            userInfoEl.innerHTML = `
+                <h4>Welcome, ${user.first_name || 'User'}!</h4>
+                <p><strong>Email:</strong> ${user.email_addresses[0]?.email_address || 'No email'}</p>
+                <p><strong>User ID:</strong> ${user.id}</p>
+                <p><strong>Session ID:</strong> ${clerk.session?.id || 'No session'}</p>
+                <p><strong>Created:</strong> ${new Date(user.created_at).toLocaleString()}</p>
+                ${clerk.organization ? `<p><strong>Organization:</strong> ${clerk.organization.name}</p>` : ''}
+            `;
+        }
+
+        // Authentication functions
+        async function signInWithPassword() {
+            const email = document.getElementById('signin-email').value;
+            const password = document.getElementById('signin-password').value;
+
+            if (!email || !password) {
+                showStatus('Please fill in all fields', 'error');
+                return;
+            }
+
+            try {
+                showStatus('Signing in...', 'info');
+
+                const signIn = clerk.signIn();
+                const result = await signIn.authenticateWithPassword(email, password);
+
+                if (result.status === 'complete') {
+                    showStatus('✅ Sign in successful!', 'success');
+                    updateUI();
+                } else {
+                    showStatus(`Sign in incomplete: ${result.status}`, 'error');
+                }
+            } catch (error) {
+                showStatus(`❌ Sign in failed: ${error.message}`, 'error');
+                console.error('Sign in error:', error);
+            }
+        }
+
+        async function signInWithEmailCode() {
+            const email = document.getElementById('signin-email').value;
+
+            if (!email) {
+                showStatus('Please enter your email', 'error');
+                return;
+            }
+
+            try {
+                showStatus('Sending verification code...', 'info');
+
+                currentSignIn = clerk.signIn();
+                await currentSignIn.authenticateWithEmailCode(email);
+
+                showStatus('✅ Verification code sent! Check your email.', 'success');
+                document.getElementById('email-code-section').classList.remove('hidden');
+            } catch (error) {
+                showStatus(`❌ Failed to send code: ${error.message}`, 'error');
+                console.error('Email code error:', error);
+            }
+        }
+
+        async function verifyEmailCode() {
+            const code = document.getElementById('email-code').value;
+
+            if (!code) {
+                showStatus('Please enter the verification code', 'error');
+                return;
+            }
+
+            if (!currentSignIn) {
+                showStatus('No sign-in attempt in progress', 'error');
+                return;
+            }
+
+            try {
+                showStatus('Verifying code...', 'info');
+
+                const result = await currentSignIn.submitEmailCode(code);
+
+                if (result.status === 'complete') {
+                    showStatus('✅ Email verified! Sign in successful!', 'success');
+                    document.getElementById('email-code-section').classList.add('hidden');
+                    updateUI();
+                    currentSignIn = null;
+                } else {
+                    showStatus(`Verification incomplete: ${result.status}`, 'error');
+                }
+            } catch (error) {
+                showStatus(`❌ Code verification failed: ${error.message}`, 'error');
+                console.error('Code verification error:', error);
+            }
+        }
+
+        async function signUpWithEmail() {
+            const email = document.getElementById('signup-email').value;
+            const password = document.getElementById('signup-password').value;
+            const firstName = document.getElementById('signup-firstname').value;
+            const lastName = document.getElementById('signup-lastname').value;
+
+            if (!email || !password) {
+                showStatus('Email and password are required', 'error');
+                return;
+            }
+
+            try {
+                showStatus('Creating account...', 'info');
+
+                currentSignUp = clerk.signUp();
+                await currentSignUp.signUpWithEmail(email, password, {
+                    firstName,
+                    lastName
+                });
+
+                showStatus('✅ Account created! Check your email for verification code.', 'success');
+                document.getElementById('signup-verify-section').classList.remove('hidden');
+            } catch (error) {
+                showStatus(`❌ Sign up failed: ${error.message}`, 'error');
+                console.error('Sign up error:', error);
+            }
+        }
+
+        async function verifySignUp() {
+            const code = document.getElementById('signup-code').value;
+
+            if (!code) {
+                showStatus('Please enter the verification code', 'error');
+                return;
+            }
+
+            if (!currentSignUp) {
+                showStatus('No sign-up attempt in progress', 'error');
+                return;
+            }
+
+            try {
+                showStatus('Verifying account...', 'info');
+
+                const result = await currentSignUp.verifyEmail(code);
+
+                if (result.status === 'complete') {
+                    showStatus('🎉 Account verified! Welcome!', 'success');
+                    document.getElementById('signup-verify-section').classList.add('hidden');
+                    updateUI();
+                    currentSignUp = null;
+                } else {
+                    showStatus(`Verification incomplete: ${result.status}`, 'error');
+                }
+            } catch (error) {
+                showStatus(`❌ Account verification failed: ${error.message}`, 'error');
+                console.error('Account verification error:', error);
+            }
+        }
+
+        // User functions
+        function getCurrentUser() {
+            const user = clerk.getCurrentUser();
+
+            if (user) {
+                showStatus('✅ Current user retrieved', 'success');
+                console.log('Current User:', {
+                    id: user.id,
+                    email: user.email_addresses[0]?.email_address,
+                    firstName: user.first_name,
+                    lastName: user.last_name,
+                    createdAt: new Date(user.created_at).toLocaleString(),
+                    emailVerified: user.email_addresses[0]?.verification?.status === 'verified',
+                    profileImageUrl: user.profile_image_url
+                });
+
+                // Update the display
+                displayUserInfo();
+            } else {
+                showStatus('⚠️ No current user found', 'error');
+            }
+        }
+
+        async function refreshUser() {
+            try {
+                showStatus('Refreshing user data...', 'info');
+
+                const user = await clerk.getUser();
+
+                if (user) {
+                    showStatus('✅ User data refreshed!', 'success');
+                    console.log('Fresh user data:', user);
+                    displayUserInfo();
+                } else {
+                    showStatus('❌ Failed to refresh user data', 'error');
+                }
+            } catch (error) {
+                showStatus(`❌ User refresh failed: ${error.message}`, 'error');
+                console.error('User refresh error:', error);
+            }
+        }
+
+        // Token and session functions
+        async function getJWTToken() {
+            try {
+                showStatus('Getting JWT token...', 'info');
+
+                const token = await clerk.getToken();
+
+                document.getElementById('jwt-token').textContent = token;
+                document.getElementById('token-display').classList.remove('hidden');
+
+                showStatus('✅ JWT token retrieved!', 'success');
+
+                // Also log the decoded payload for inspection
+                const decoded = clerk.decodeJWT(token);
+                console.log('JWT Payload:', decoded);
+            } catch (error) {
+                showStatus(`❌ Failed to get token: ${error.message}`, 'error');
+                console.error('Token error:', error);
+            }
+        }
+
+        async function refreshSession() {
+            try {
+                showStatus('Refreshing session...', 'info');
+
+                const refreshed = await clerk.refreshSession();
+
+                if (refreshed) {
+                    showStatus('✅ Session refreshed!', 'success');
+                } else {
+                    showStatus('❌ Failed to refresh session', 'error');
+                }
+            } catch (error) {
+                showStatus(`❌ Session refresh failed: ${error.message}`, 'error');
+                console.error('Session refresh error:', error);
+            }
+        }
+
+        async function signOut() {
+            try {
+                showStatus('Signing out...', 'info');
+
+                await clerk.signOut();
+
+                showStatus('✅ Signed out successfully', 'success');
+                updateUI();
+            } catch (error) {
+                showStatus(`❌ Sign out failed: ${error.message}`, 'error');
+                console.error('Sign out error:', error);
+            }
+        }
+
+        async function signOutAll() {
+            try {
+                showStatus('Signing out from all sessions...', 'info');
+
+                await clerk.signOutAll();
+
+                showStatus('✅ Signed out from all sessions', 'success');
+                updateUI();
+            } catch (error) {
+                showStatus(`❌ Sign out all failed: ${error.message}`, 'error');
+                console.error('Sign out all error:', error);
+            }
+        }
+
+        // Organization functions
+        async function createOrganization() {
+            const name = document.getElementById('org-name').value;
+            const slug = document.getElementById('org-slug').value;
+
+            if (!name || !slug) {
+                showStatus('Organization name and slug are required', 'error');
+                return;
+            }
+
+            try {
+                showStatus('Creating organization...', 'info');
+
+                const org = await clerk.createOrganization(name, slug);
+
+                showStatus(`✅ Organization "${org.name}" created!`, 'success');
+
+                // Clear form
+                document.getElementById('org-name').value = '';
+                document.getElementById('org-slug').value = '';
+
+                // Refresh organizations list
+                await listOrganizations();
+            } catch (error) {
+                showStatus(`❌ Failed to create organization: ${error.message}`, 'error');
+                console.error('Organization creation error:', error);
+            }
+        }
+
+        async function listOrganizations() {
+            try {
+                showStatus('Loading organizations...', 'info');
+
+                const orgs = await clerk.listOrganizations();
+
+                const orgsList = document.getElementById('organizations-list');
+
+                if (orgs.length === 0) {
+                    orgsList.innerHTML = '<p>No organizations found.</p>';
+                } else {
+                    orgsList.innerHTML = orgs.map(org => `
+                        <div class="user-info">
+                            <h5>${org.name}</h5>
+                            <p><strong>Slug:</strong> ${org.slug}</p>
+                            <p><strong>Members:</strong> ${org.members_count}</p>
+                            <p><strong>Created:</strong> ${new Date(org.created_at).toLocaleDateString()}</p>
+                            <button class="btn" onclick="setActiveOrganization('${org.id}')">
+                                Set Active
+                            </button>
+                        </div>
+                    `).join('');
+                }
+
+                showStatus(`✅ Loaded ${orgs.length} organizations`, 'success');
+            } catch (error) {
+                showStatus(`❌ Failed to load organizations: ${error.message}`, 'error');
+                console.error('Organizations list error:', error);
+            }
+        }
+
+        async function setActiveOrganization(orgId) {
+            try {
+                showStatus('Setting active organization...', 'info');
+
+                await clerk.setActiveOrganization(orgId);
+
+                showStatus('✅ Active organization updated!', 'success');
+                updateUI();
+            } catch (error) {
+                showStatus(`❌ Failed to set active organization: ${error.message}`, 'error');
+                console.error('Set active organization error:', error);
+            }
+        }
+
+        // Debug functions
+        async function debugSession() {
+            await clerk.debugSession();
+            showStatus('✅ Session debug info logged to console', 'success');
+        }
+
+        async function debugClient() {
+            await clerk.debugClient();
+            showStatus('✅ Client debug info logged to console', 'success');
+        }
+
+        // Event listeners
+        clerk.addListener('loaded', () => {
+            if (clerk.isSignedIn) {
+                const user = clerk.user;
+                const email = user?.email_addresses[0]?.email_address || 'Unknown';
+                showStatus(`🎉 Welcome back! Session restored for ${email}`, 'success');
+                console.log('💾 Session automatically restored from browser storage');
+            } else {
+                showStatus('✅ Clerk SDK loaded successfully!', 'success');
+            }
+            updateUI();
+        });
+
+        clerk.addListener('sessionCreated', (data) => {
+            console.log('Session created:', data);
+            const user = data.session?.user;
+            if (user) {
+                const email = user.email_addresses[0]?.email_address || 'Unknown';
+                showStatus(`🔐 Session created for ${email}`, 'success');
+                console.log('💾 Session will be automatically saved for next visit');
+            }
+            updateUI();
+        });
+
+        clerk.addListener('sessionDestroyed', (data) => {
+            console.log('Session destroyed:', data);
+            showStatus('👋 You have been signed out', 'info');
+            console.log('🗑️ Session removed from browser storage');
+            updateUI();
+        });
+
+        clerk.addListener('userUpdated', (data) => {
+            console.log('User updated:', data);
+            showStatus('👤 User profile updated', 'info');
+            updateUI();
+        });
+
+        clerk.addListener('error', (error) => {
+            console.error('Clerk SDK error:', error);
+            showStatus(`❌ SDK Error: ${error.message}`, 'error');
+        });
+
+        // Show session persistence demonstration
+        function showSessionInfo() {
+            if (!clerk.isSignedIn) {
+                showStatus('⚠️ Please sign in first to see session info', 'error');
+                return;
+            }
+
+            const session = clerk.session;
+            const user = clerk.user;
+            
+            const sessionInfo = `
+📱 SESSION PERSISTENCE INFO:
+
+🆔 Session ID: ${session.id}
+👤 User: ${user.email_addresses[0]?.email_address}
+⏰ Created: ${new Date(session.created_at).toLocaleString()}
+🔄 Last Active: ${new Date(session.updated_at).toLocaleString()}
+⏳ Expires: ${new Date(session.expire_at).toLocaleString()}
+
+💡 This session is automatically saved in your browser.
+   When you return, you'll stay logged in until:
+   • You manually sign out
+   • The session expires
+   • You clear browser data
+
+🔄 Session is automatically refreshed every 5 minutes
+   to keep you logged in while you're active.
+            `.trim();
+
+            alert(sessionInfo);
+            console.log('Session Details:', {
+                id: session.id,
+                user: user.email_addresses[0]?.email_address,
+                created: session.created_at,
+                expires: session.expire_at,
+                status: session.status
+            });
+        }
+
+        // Simulate page refresh to demonstrate session restoration
+        function simulateRefresh() {
+            if (confirm('🔄 This will refresh the page to demonstrate session restoration.\n\nIf you\'re signed in, you\'ll remain signed in after refresh.\n\nProceed?')) {
+                location.reload();
+            }
+        }
+
+        // Clear browser storage (for testing)
+        function clearBrowserStorage() {
+            if (confirm('🗑️ This will clear browser storage and refresh the page.\n\nYou will be signed out and need to sign in again.\n\nProceed?')) {
+                localStorage.clear();
+                sessionStorage.clear();
+                
+                // Clear cookies by setting them to expire
+                document.cookie.split(";").forEach(function(c) { 
+                    document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); 
+                });
+                
+                showStatus('🗑️ Browser storage cleared. Refreshing page...', 'info');
+                setTimeout(() => location.reload(), 2000);
+            }
+        }
+
+        // Initialize the SDK when page loads
+        document.addEventListener('DOMContentLoaded', async () => {
+            showStatus('🚀 Initializing Clerk SDK...', 'info');
+            console.log('🔍 Checking for existing session in browser...');
+            
+            // Debug: Check localStorage before initialization
+            const cachedSession = localStorage.getItem('clerk_session_cache');
+            if (cachedSession) {
+                console.log('📦 Found cached session data in localStorage:', JSON.parse(cachedSession));
+            } else {
+                console.log('ℹ️ No cached session data in localStorage');
+            }
+            
+            try {
+                await clerk.load();
+                
+                if (clerk.isSignedIn) {
+                    console.log('✅ Found existing session - user stays logged in!');
+                    console.log('👤 Current user:', clerk.user?.email_addresses[0]?.email_address);
+                    console.log('🆔 Session ID:', clerk.session?.id);
+                } else {
+                    console.log('ℹ️ No existing session found - user needs to sign in');
+                    
+                    // Debug: Check what happened to localStorage
+                    const postInitCache = localStorage.getItem('clerk_session_cache');
+                    console.log('📦 localStorage after init:', postInitCache ? JSON.parse(postInitCache) : 'none');
+                }
+                
+            } catch (error) {
+                showStatus(`❌ Failed to initialize: ${error.message}`, 'error');
+                console.error('Initialization error:', error);
+            }
+        });
+
+        // Make clerk available globally for debugging
+        window.clerk = clerk;
+    </script>
+</body>
+</html>
