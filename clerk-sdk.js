@@ -6,7 +6,7 @@
 
 class ClerkSDK {
   constructor(options = {}) {
-    this.domain = options.domain || 'bright-newt-8.clerk.accounts.dev';
+    this.domain = options.domain || 'bright-light-9.clerk.accounts.dev';
     this.apiVersion = options.apiVersion || '2025-04-10';
     this.jsVersion = options.jsVersion || '5.88.0';
     

@@ -916,7 +916,7 @@ class MyApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(
           create: (_) => AuthProvider(
-            ClerkService('bright-newt-8.clerk.accounts.dev'), // Your domain
+            ClerkService('bright-light-9.clerk.accounts.dev'), // Your domain
           ),
         ),
       ],
